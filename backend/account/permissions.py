@@ -30,6 +30,13 @@ class IsAdminOrOwner(permissions.BasePermission):
         return False
 
 
+class IsOwnerOnly(permissions.BasePermission):
+    """Only the owner of the object can access."""
+
+    def has_object_permission(self, request, view, obj):
+        return request.user.is_authenticated and obj.id == request.user.id
+
+
 class AdminUpdateRestriction(permissions.BasePermission):
     """
     Restrict admin from updating certain fields after creation.

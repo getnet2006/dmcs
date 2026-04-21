@@ -88,9 +88,6 @@ class UserSerializer(serializers.ModelSerializer):
                 self.fields["first_name"].read_only = True
                 self.fields["last_name"].read_only = True
                 self.fields["email"].read_only = True
-                self.fields["password"].read_only = (
-                    True  # Ensure password is not updated here by admin
-                )
 
     def update(self, instance, validated_data):
         """

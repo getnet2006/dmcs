@@ -10,6 +10,7 @@ admin.site.unregister(Group)
 class UserAdmin(UserAdmin):
     model = User
     list_display = (
+        "id",
         "username",
         "email",
         "first_name",

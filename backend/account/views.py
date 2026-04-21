@@ -12,7 +12,12 @@ from .serializers import (
     LoginSerializer,
     LogoutSerializer,
 )
-from .permissions import IsAdminRole, IsAdminOrOwner
+from .permissions import (
+    IsAdminRole,
+    IsAdminOrOwner,
+    IsOwnerOnly,
+    AdminUpdateRestriction,
+)
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -70,6 +75,13 @@ class UserViewSet(viewsets.ModelViewSet):
         # Retrieve (GET) and Partial update (PATCH): Admin or Owner
         elif self.action in ["retrieve", "partial_update"]:
             permission_classes = [IsAdminOrOwner]
+
+        elif self.action in ["change_password", "me_change_password"]:
+            # Use custom permission that only checks authentication
+            permission_classes = [
+                IsOwnerOnly,
+                AdminUpdateRestriction,
+            ]
 
         else:
             permission_classes = [IsAdminRole]  # Default to admin
