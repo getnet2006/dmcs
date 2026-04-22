@@ -141,14 +141,13 @@ class UserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # Validate old password for non-admin users
-        if not request.user.has_admin_role():
-            old_password = request.data.get("old_password")
-            if not old_password or not user.check_password(old_password):
-                return Response(
-                    {"detail": "Old password is incorrect."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+        # Validate old password
+        old_password = request.data.get("old_password")
+        if not old_password or not user.check_password(old_password):
+            return Response(
+                {"detail": "Old password is incorrect."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Set new password
         new_password = request.data.get("new_password")
