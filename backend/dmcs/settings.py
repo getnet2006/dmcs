@@ -45,6 +45,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "account.middleware.MustChangePasswordMiddleware",
 ]
 
 ROOT_URLCONF = "dmcs.urls"
@@ -66,6 +67,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "dmcs.wsgi.application"
 
+AUTHENTICATION_BACKENDS = [
+    "account.authentication.CustomAuthBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (

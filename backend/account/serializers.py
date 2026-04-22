@@ -10,6 +10,7 @@ class PermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Permission
         fields = ["id", "codename", "name"]
+        ordering = ["id"]
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -140,6 +141,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         user = User.objects.create(**validated_data)
         user.set_password(password)
         user.groups.set(role_ids)
+        user.must_change_password = True
         user.save()
         return user
 
@@ -166,12 +168,26 @@ class LoginSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError("User account is disabled")
 
+        # Check if password change is required
+        if user.must_change_password:
+            refresh = RefreshToken.for_user(user)
+            # Add claim to indicate password change required
+            refresh["must_change_password"] = True
+            print(refresh["must_change_password"])
+            return {
+                "refresh": str(refresh),
+                "access": str(refresh.access_token),
+                "must_change_password": user.must_change_password,
+                "user_id": user.id,
+            }
+
         refresh = RefreshToken.for_user(user)
 
         return {
             "username": user.username,
             "access": str(refresh.access_token),
             "refresh": str(refresh),
+            "must_change_password": user.must_change_password,
         }
 
 

@@ -7,6 +7,7 @@ from django.db import models
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     updated_at = models.DateTimeField(auto_now=True)
+    must_change_password = models.BooleanField(default=False)
 
     REQUIRED_FIELDS = ["first_name", "last_name", "email"]
 

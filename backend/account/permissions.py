@@ -1,4 +1,7 @@
 from rest_framework import permissions
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class IsAdminRole(permissions.BasePermission):
@@ -65,4 +68,43 @@ class AdminUpdateRestriction(permissions.BasePermission):
                         # User is trying to change a forbidden field
                         return False
 
+        return True
+
+
+class CanChangeFirstLoginPassword(permissions.BasePermission):
+    """
+    Permission to change password on first login.
+    User must be authenticated and have must_change_password=True.
+    """
+
+    def has_permission(self, request, view):
+        logger.info(f"=== CanChangeFirstLoginPassword Debug ===")
+        logger.info(f"Request path: {request.path}")
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"User: {request.user}")
+        logger.info(
+            f"Is authenticated: {request.user.is_authenticated if request.user else False}"
+        )
+
+        if not request.user or not request.user.is_authenticated:
+            logger.warning("Failed: User not authenticated")
+            return False
+
+        logger.info(
+            f"Has must_change_password attr: {hasattr(request.user, 'must_change_password')}"
+        )
+        if hasattr(request.user, "must_change_password"):
+            logger.info(
+                f"must_change_password value: {request.user.must_change_password}"
+            )
+
+        if not hasattr(request.user, "must_change_password"):
+            logger.warning("Failed: User has no must_change_password attribute")
+            return False
+
+        if not request.user.must_change_password:
+            logger.warning("Failed: must_change_password is False")
+            return False
+
+        logger.info("Permission granted!")
         return True

@@ -17,6 +17,7 @@ class UserAdmin(UserAdmin):
         "last_name",
         "is_staff",
         "is_active",
+        "must_change_password",
     )
     list_filter = ("is_staff", "is_active")
     search_fields = ("username", "email")
