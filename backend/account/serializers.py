@@ -1,6 +1,8 @@
 from django.contrib.auth.models import Group, Permission
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import authenticate
 from .models import User
 
 
@@ -51,7 +53,63 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "fname", "lname", "is_active", "roles"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "is_active",
+            "roles",
+        ]
+        read_only_fields = [
+            "id",
+            "is_active",
+            "roles",
+            "email",
+            "first_name",
+            "last_name",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If this is an update operation (instance exists)
+        if self.instance:
+            request = self.context.get("request")
+
+            # If admin is updating an existing user
+            if (
+                request
+                and request.user.is_authenticated
+                and request.user.has_admin_role()
+            ):
+                # Make first_name and last_name read-only
+                self.fields["first_name"].read_only = True
+                self.fields["last_name"].read_only = True
+                self.fields["email"].read_only = True
+
+    def update(self, instance, validated_data):
+        """
+        Custom update logic: Only roles and is_active can be updated by admin.
+        """
+        request = self.context.get("request")
+
+        # If admin is updating
+        if request and request.user.has_admin_role():
+            # Only allow these fields to be updated
+            allowed_update_fields = ["is_active", "roles"]
+
+            for field in allowed_update_fields:
+                if field in validated_data:
+                    setattr(instance, field, validated_data[field])
+
+            # Save without touching other fields
+            instance.save()
+            return instance
+
+        # Non-admin updates (owners) - only allow PATCH for certain fields
+        return super().update(instance, validated_data)
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -60,17 +118,40 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "fname", "lname", "password", "role_ids"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "role_ids",
+        ]
 
     def create(self, validated_data):
         role_ids = validated_data.pop("role_ids")
         password = validated_data.pop("password")
+
+        # Validate that all role_ids exist
+        if not Group.objects.filter(id__in=role_ids).count() == len(role_ids):
+            raise serializers.ValidationError(
+                {"role_ids": "One or more role IDs do not exist."}
+            )
 
         user = User.objects.create(**validated_data)
         user.set_password(password)
         user.groups.set(role_ids)
         user.save()
         return user
+
+
+class AssignRoleSerializer(serializers.Serializer):
+    role_id = serializers.IntegerField()
+
+    def validate_role_id(self, value):
+        if not Group.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Role does not exist")
+        return value
 
 
 class LoginSerializer(serializers.Serializer):
@@ -89,7 +170,6 @@ class LoginSerializer(serializers.Serializer):
         refresh = RefreshToken.for_user(user)
 
         return {
-            "user_id": user.id,
             "username": user.username,
             "access": str(refresh.access_token),
             "refresh": str(refresh),
