@@ -112,20 +112,20 @@ class UserViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
-    def partial_update(self, request, *args, **kwargs):
-        """
-        Handle PATCH requests, allowing owners to update their password.
-        """
-        instance = self.get_object()
+    # def partial_update(self, request, *args, **kwargs):
+    #     """
+    #     Handle PATCH requests, allowing owners to update their password.
+    #     """
+    #     instance = self.get_object()
 
-        # If user is not admin and is updating password, ensure it's their own
-        if not request.user.has_admin_role() and instance.id == request.user.id:
-            # Optional: Add validation for old password
-            if "password" in request.data:
-                # add logic to validate old password
-                pass
+    #     # If user is not admin and is updating password, ensure it's their own
+    #     if not request.user.has_admin_role() and instance.id == request.user.id:
+    #         # Optional: Add validation for old password
+    #         if "password" in request.data:
+    #             # add logic to validate old password
+    #             pass
 
-        return super().partial_update(request, *args, **kwargs)
+    #     return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], permission_classes=[IsAdminOrOwner])
     def change_password(self, request, pk=None):
