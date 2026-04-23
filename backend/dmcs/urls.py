@@ -10,7 +10,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("account.urls")),
-    path('api/documents/', include('documents.urls')),
+    path("api/documents/", include("documents.urls")),
+    path("api/consumers/", include("consumer.urls")),
 ]
 
 # This allows you to view uploaded files in your browser while developing
