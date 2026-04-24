@@ -4,8 +4,10 @@ from .models import (
     Application,
     ConsumerCommunication,
     ConsumerOnboardingStage,
+    Subscription,
 )
 from documents.models import Document
+from account.models import User
 
 
 # Consumer related serializers
@@ -75,10 +77,75 @@ class ConsumerDetailSerializer(serializers.ModelSerializer):
 
 
 # Application related serializers
-class ApplicationSerializer(serializers.ModelSerializer):
+class DocumentNestedSerializer(serializers.ModelSerializer):
+    category = serializers.ReadOnlyField(source="category.name")
+
+    class Meta:
+        model = Document
+        fields = ["document_id", "name", "category"]
+
+
+class SubscriptionNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = ["id", "name"]
+
+
+class ApplicationDetailSerializer(serializers.ModelSerializer):
+    consumer_name = serializers.ReadOnlyField(source="consumer.name")
+    created_by = serializers.ReadOnlyField(source="user.username")
+    current_stage_name = serializers.ReadOnlyField(source="current_stage.name")
+    documents = DocumentNestedSerializer(many=True, read_only=True)
+    subscriptions = SubscriptionNestedSerializer(many=True, read_only=True)
+
     class Meta:
         model = Application
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "consumer_name",
+            "created_by",
+            "current_stage_name",
+            "source_ip",
+            "description",
+            "last_stage_updated_at",
+            "created_at",
+            "updated_at",
+            "documents",
+            "subscriptions",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "last_stage_updated_at"]
+
+
+class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
+    consumer = serializers.PrimaryKeyRelatedField(queryset=Consumer.objects.all())
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+
+    class Meta:
+        model = Application
+        fields = [
+            "id",
+            "name",
+            "consumer",
+            "user",
+            "current_stage",
+            "source_ip",
+            "description",
+            "last_stage_updated_at",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at", "last_stage_updated_at"]
+
+    def update(self, instance, validated_data):
+        # Logic to update 'last_stage_updated_at' if the stage changes
+        new_stage = validated_data.get("current_stage")
+        if new_stage and new_stage != instance.current_stage:
+            from django.utils import timezone
+
+            instance.last_stage_updated_at = timezone.now()
+
+        return super().update(instance, validated_data)
 
 
 class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):

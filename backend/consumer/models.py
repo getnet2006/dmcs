@@ -3,6 +3,14 @@ from account.models import User
 from documents.models import Document
 
 
+# for testing purposes, we can use a simple Subscription model here
+class Subscription(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
 # Create your models here.
 class Consumer(models.Model):
     CONSUMER_TYPES = (
@@ -28,6 +36,7 @@ class ConsumerOnboardingStage(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField()
+    document_category = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
         return self.name
@@ -42,6 +51,12 @@ class Application(models.Model):
     current_stage = models.ForeignKey(
         ConsumerOnboardingStage, on_delete=models.SET_NULL, null=True
     )
+    documents = models.ManyToManyField(
+        Document, blank=True, related_name="applications"
+    )
+    subscriptions = models.ManyToManyField(
+        Subscription, blank=True, related_name="applications"
+    )
     source_ip = models.GenericIPAddressField()
     description = models.TextField(blank=True)
     last_stage_updated_at = models.DateTimeField(null=True, blank=True)
@@ -51,17 +66,12 @@ class Application(models.Model):
     def __str__(self):
         return self.name
 
-
-class ApplicationDocument(models.Model):
-    application = models.ForeignKey(Application, on_delete=models.CASCADE)
-    document = models.ForeignKey(Document, on_delete=models.CASCADE)
-
-
-class ApplicationSubscription(models.Model):
-    application = models.ForeignKey(Application, on_delete=models.CASCADE)
-    subscription = models.CharField(
-        max_length=255
-    )  # models.ForeignKey(Subscription, on_delete=models.CASCADE)
+    class Meta:
+        ordering = ["-created_at"]
+        permissions = [
+            ("add_document_to_application", "Can add document to application"),
+            ("add_subscription_to_application", "Can add subscription to application"),
+        ]
 
 
 class ConsumerCommunication(models.Model):
