@@ -135,10 +135,16 @@ class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_at", "updated_at", "last_stage_updated_at"]
+        read_only_fields = [
+            "id",
+            "created_at",
+            "updated_at",
+            "last_stage_updated_at",
+            "documents",
+            "subscriptions",
+        ]
 
     def update(self, instance, validated_data):
-        # Logic to update 'last_stage_updated_at' if the stage changes
         new_stage = validated_data.get("current_stage")
         if new_stage and new_stage != instance.current_stage:
             from django.utils import timezone
@@ -155,6 +161,31 @@ class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):
 
 
 class ConsumerCommunicationSerializer(serializers.ModelSerializer):
+    application_name = serializers.ReadOnlyField(source="application.name")
+    created_by = serializers.ReadOnlyField(source="user.username")
+
     class Meta:
         model = ConsumerCommunication
-        fields = "__all__"
+        fields = [
+            "id",
+            "application_name",
+            "remark",
+            "created_by",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ConsumerCommunicationCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConsumerCommunication
+        fields = [
+            "id",
+            "application",
+            "remark",
+            "created_by",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]

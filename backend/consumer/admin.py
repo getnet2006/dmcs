@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Consumer, ConsumerOnboardingStage, Application, Subscription
+from .models import (
+    Consumer,
+    ConsumerOnboardingStage,
+    Application,
+    Subscription,
+    ConsumerCommunication,
+)
 
 
 @admin.register(Consumer)
@@ -29,4 +35,11 @@ class ApplicationAdmin(admin.ModelAdmin):
         "updated_at",
     )
     search_fields = ("name", "consumer__name", "user__username")
+    ordering = ("-created_at",)
+
+
+@admin.register(ConsumerCommunication)
+class ConsumerCommunicationAdmin(admin.ModelAdmin):
+    list_display = ("id", "application", "remark", "created_by", "created_at")
+    search_fields = ("application__name", "remark", "created_by__username")
     ordering = ("-created_at",)

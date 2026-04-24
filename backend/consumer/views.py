@@ -17,6 +17,7 @@ from .serializers import (
     ApplicationCreateUpdateSerializer,
     ApplicationDetailSerializer,
     ConsumerCommunicationSerializer,
+    ConsumerCommunicationCreateUpdateSerializer,
     ConsumerOnboardingStageSerializer,
 )
 from documents.models import Document
@@ -171,4 +172,29 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
 class CommunicationViewSet(viewsets.ModelViewSet):
     queryset = ConsumerCommunication.objects.all()
-    serializer_class = ConsumerCommunicationSerializer
+    http_method_names = ["get", "post"]
+    permission_classes = [DjangoModelPermissions]
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "list"]:
+            return ConsumerCommunicationSerializer
+        return ConsumerCommunicationCreateUpdateSerializer
+
+    def list(self, request, *args, **kwargs):
+        return Response(
+            {
+                "error": "Listing all communications is not allowed. Use by-application endpoint instead."
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # action to retrieve communications for a specific application
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="by-application/(?P<application_id>[^/.]+)",
+    )
+    def by_application(self, request, application_id=None):
+        communications = self.queryset.filter(application_id=application_id)
+        serializer = self.get_serializer(communications, many=True)
+        return Response(serializer.data)
