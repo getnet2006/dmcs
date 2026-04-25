@@ -5,11 +5,11 @@ from django.db import models
 
 
 class User(AbstractUser):
-    email = models.EmailField(unique=True)
+    # email = models.EmailField(unique=True)
     updated_at = models.DateTimeField(auto_now=True)
     must_change_password = models.BooleanField(default=False)
 
-    REQUIRED_FIELDS = ["first_name", "last_name", "email"]
+    REQUIRED_FIELDS = ["first_name", "last_name"]
 
     def has_admin_role(self):
         """Check if user has Admin role"""
