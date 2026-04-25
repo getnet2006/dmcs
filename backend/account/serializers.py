@@ -137,11 +137,15 @@ class UserCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"role_ids": "One or more role IDs do not exist."}
             )
+        admin_group = Group.objects.filter(name="Admin").first()
+        is_admin = admin_group and admin_group.id in role_ids
 
         user = User.objects.create(**validated_data)
         user.set_password(password)
         user.groups.set(role_ids)
         user.must_change_password = True
+        if is_admin:
+            user.is_staff = True
         user.save()
         return user
 
