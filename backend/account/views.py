@@ -318,6 +318,30 @@ class UserViewSet(viewsets.ModelViewSet):
             }
         )
 
+    # action to rest a user's password by admin
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminRole])
+    def reset_password(self, request, pk=None):
+        """
+        Admin endpoint to reset a user's password.
+        POST /api/users/{id}/reset_password/
+        """
+        user = self.get_object()
+
+        # Generate a new random password (or you can set a default one)
+        new_password = User.objects.make_random_password()
+
+        # Set the new password and mark that the user must change it on next login
+        user.set_password(new_password)
+        user.must_change_password = True
+        user.save()
+
+        return Response(
+            {
+                "detail": "Password reset successfully.",
+                "new_password": new_password,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 class LoginView(APIView):
     permission_classes = [AllowAny]
