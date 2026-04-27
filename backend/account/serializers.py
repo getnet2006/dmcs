@@ -51,6 +51,7 @@ class UserSerializer(serializers.ModelSerializer):
     roles = serializers.SlugRelatedField(
         many=True, slug_field="name", queryset=Group.objects.all(), source="groups"
     )
+    full_name = serializers.CharField(source="get_full_name", read_only=True)
 
     class Meta:
         model = User
@@ -62,6 +63,7 @@ class UserSerializer(serializers.ModelSerializer):
             "last_name",
             "is_active",
             "roles",
+            "full_name",
         ]
         read_only_fields = [
             "id",
@@ -69,6 +71,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "full_name",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -121,7 +124,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
-            "email",
             "first_name",
             "last_name",
             "password",
@@ -183,6 +185,7 @@ class LoginSerializer(serializers.Serializer):
                 "access": str(refresh.access_token),
                 "must_change_password": user.must_change_password,
                 "user_id": user.id,
+                "roles": [group.name for group in user.groups.all()],
             }
 
         refresh = RefreshToken.for_user(user)
@@ -191,6 +194,7 @@ class LoginSerializer(serializers.Serializer):
             "username": user.username,
             "access": str(refresh.access_token),
             "refresh": str(refresh),
+            "roles": [group.name for group in user.groups.all()],
             "must_change_password": user.must_change_password,
         }
 

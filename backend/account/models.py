@@ -20,5 +20,8 @@ class User(AbstractUser):
     def is_admin(self):
         return self.has_admin_role()
 
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
+
     def __str__(self):
         return self.username
