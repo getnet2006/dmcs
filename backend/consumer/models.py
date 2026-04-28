@@ -1,17 +1,29 @@
 from django.db import models
 from account.models import User
 from documents.models import Document
+from account.models import User
 
 
-# for testing purposes, we can use a simple Subscription model here
 class Subscription(models.Model):
+    # authentication options: API Key, OAuth, JWT, etc.
+    AUTHENTICATION_TYPES = [
+        ("api_key", "API Key"),
+        ("oauth", "OAuth"),
+        ("jwt", "JWT"),
+    ]
     name = models.CharField(max_length=255)
+    created_by = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="subscriptions"
+    )
+    authentication_type = models.CharField(max_length=100, choices=AUTHENTICATION_TYPES)
+    client_id = models.CharField(max_length=255, unique=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}"
 
 
-# Create your models here.
 class Consumer(models.Model):
     CONSUMER_TYPES = (
         ("External", "External"),

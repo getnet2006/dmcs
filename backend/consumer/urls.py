@@ -6,6 +6,7 @@ router = DefaultRouter()
 router.register("stages", StageViewSet, basename="stage")
 router.register("applications", ApplicationViewSet, basename="application")
 router.register("communications", CommunicationViewSet, basename="communication")
+router.register("subscriptions", SubscriptionViewSet, basename="subscriptions")
 router.register("", ConsumerViewSet, basename="consumer")
 
 urlpatterns = [

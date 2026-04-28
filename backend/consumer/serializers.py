@@ -189,3 +189,22 @@ class ConsumerCommunicationCreateUpdateSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+# serializer for subscription retrival in application detail view
+class SubscriptionReadSerializer(serializers.ModelSerializer):
+    created_by = serializers.StringRelatedField()
+
+    class Meta:
+        model = Subscription
+        fields = "__all__"
+
+
+# serializer for subscription creation and update
+class SubscriptionCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Subscription
+        fields = [
+            "name",
+        ]
+        read_only_fields = ["id", "created_by", "created_at", "updated_at"]

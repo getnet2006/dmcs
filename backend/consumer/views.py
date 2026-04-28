@@ -19,6 +19,8 @@ from .serializers import (
     ConsumerCommunicationSerializer,
     ConsumerCommunicationCreateUpdateSerializer,
     ConsumerOnboardingStageSerializer,
+    SubscriptionReadSerializer,
+    SubscriptionCreateUpdateSerializer,
 )
 from documents.models import Document
 from account.models import User
@@ -180,6 +182,9 @@ class CommunicationViewSet(viewsets.ModelViewSet):
             return ConsumerCommunicationSerializer
         return ConsumerCommunicationCreateUpdateSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
     def list(self, request, *args, **kwargs):
         return Response(
             {
@@ -198,3 +203,23 @@ class CommunicationViewSet(viewsets.ModelViewSet):
         communications = self.queryset.filter(application_id=application_id)
         serializer = self.get_serializer(communications, many=True)
         return Response(serializer.data)
+
+
+class SubscriptionViewSet(viewsets.ModelViewSet):
+    queryset = Subscription.objects.all()
+    http_method_names = ["get", "post", "put", "patch"]
+
+    def get_serializer_class(self):
+        if self.action in ["list", "retrieve"]:
+            return SubscriptionReadSerializer
+        return SubscriptionWriteSerializer
+
+    def get_permissions(self):
+        if self.action in ["update", "partial_update"]:
+            self.permission_classes = [IsAuthenticated, IsOwner | IsAdminRole]
+        else:
+            self.permission_classes = [IsAuthenticated, DjangoModelPermissions]
+        return super().get_permissions()
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
