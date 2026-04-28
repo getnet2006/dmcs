@@ -43,3 +43,8 @@ class ConsumerCommunicationAdmin(admin.ModelAdmin):
     list_display = ("id", "application", "remark", "created_by", "created_at")
     search_fields = ("application__name", "remark", "created_by__username")
     ordering = ("-created_at",)
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("id", "name", "created_date", "created_by")
