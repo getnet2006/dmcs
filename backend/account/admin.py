@@ -12,7 +12,6 @@ class UserAdmin(UserAdmin):
     list_display = (
         "id",
         "username",
-        "email",
         "first_name",
         "last_name",
         "is_staff",
@@ -20,7 +19,6 @@ class UserAdmin(UserAdmin):
         "must_change_password",
     )
     list_filter = ("is_staff", "is_active")
-    search_fields = ("username", "email")
     ordering = ("id",)
 
     # Override fieldsets for the add user form
@@ -31,7 +29,6 @@ class UserAdmin(UserAdmin):
                 "classes": ("wide",),
                 "fields": (
                     "username",
-                    "email",
                     "password1",
                     "password2",
                     "first_name",
@@ -46,7 +43,7 @@ class UserAdmin(UserAdmin):
     # Override fieldsets for the change user form
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        ("Personal Info", {"fields": ("first_name", "last_name", "email")}),
+        ("Personal Info", {"fields": ("first_name", "last_name")}),
         (
             "Permissions",
             {

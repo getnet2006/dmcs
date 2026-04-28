@@ -58,17 +58,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "username",
-            "email",
             "first_name",
             "last_name",
             "is_active",
-            "roles",
             "full_name",
+            "roles",
         ]
         read_only_fields = [
             "id",
             "roles",
-            "email",
             "first_name",
             "last_name",
             "full_name",
@@ -90,7 +88,6 @@ class UserSerializer(serializers.ModelSerializer):
                 # Make first_name and last_name read-only
                 self.fields["first_name"].read_only = True
                 self.fields["last_name"].read_only = True
-                self.fields["email"].read_only = True
 
     def update(self, instance, validated_data):
         """
@@ -152,12 +149,45 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return user
 
 
-class AssignRoleSerializer(serializers.Serializer):
-    role_id = serializers.IntegerField()
+class UserUpdateSerializer(serializers.ModelSerializer):
+    role_ids = serializers.ListField(
+        child=serializers.IntegerField(), write_only=True, required=False
+    )
+    password = serializers.CharField(write_only=True, required=False)
 
-    def validate_role_id(self, value):
-        if not Group.objects.filter(id=value).exists():
-            raise serializers.ValidationError("Role does not exist")
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "is_active",
+            "password",
+            "role_ids",
+        ]
+
+    def update(self, instance, validated_data):
+        # check if the request contain password or role_ids and raise error if it does, to prevent updates through this serializer
+        if "password" in validated_data or "role_ids" in validated_data:
+            raise serializers.ValidationError(
+                {
+                    "detail": "Updates to password or roles are not allowed through this endpoint."
+                }
+            )
+
+        # 3. Update the remaining fields (username, first_name, etc.)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+        return instance
+
+
+class AssignRoleSerializer(serializers.Serializer):
+    role_ids = serializers.ListField(child=serializers.IntegerField(), write_only=True)
+
+    def validate_role_ids(self, value):
+        if not Group.objects.filter(id__in=value).count() == len(value):
+            raise serializers.ValidationError("One or more role IDs do not exist")
         return value
 
 
@@ -181,10 +211,10 @@ class LoginSerializer(serializers.Serializer):
             refresh["must_change_password"] = True
             print(refresh["must_change_password"])
             return {
-                "refresh": str(refresh),
+                "user_id": user.username,
                 "access": str(refresh.access_token),
+                "refresh": str(refresh),
                 "must_change_password": user.must_change_password,
-                "user_id": user.id,
                 "roles": [group.name for group in user.groups.all()],
             }
 
@@ -194,8 +224,8 @@ class LoginSerializer(serializers.Serializer):
             "username": user.username,
             "access": str(refresh.access_token),
             "refresh": str(refresh),
-            "roles": [group.name for group in user.groups.all()],
             "must_change_password": user.must_change_password,
+            "roles": [group.name for group in user.groups.all()],
         }
 
 

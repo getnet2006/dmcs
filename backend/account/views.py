@@ -6,6 +6,7 @@ from .models import User
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
+    UserUpdateSerializer,
     AssignRoleSerializer,
     RoleSerializer,
     RoleCreateUpdateSerializer,
@@ -126,6 +127,8 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             return UserCreateSerializer
+        elif self.action in ["update", "partial_update"]:
+            return UserUpdateSerializer
         return UserSerializer
 
     def get_serializer_context(self):
@@ -133,21 +136,6 @@ class UserViewSet(viewsets.ModelViewSet):
         context = super().get_serializer_context()
         context["request"] = self.request
         return context
-
-    # def partial_update(self, request, *args, **kwargs):
-    #     """
-    #     Handle PATCH requests, allowing owners to update their password.
-    #     """
-    #     instance = self.get_object()
-
-    #     # If user is not admin and is updating password, ensure it's their own
-    #     if not request.user.has_admin_role() and instance.id == request.user.id:
-    #         # Optional: Add validation for old password
-    #         if "password" in request.data:
-    #             # add logic to validate old password
-    #             pass
-
-    #     return super().partial_update(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], permission_classes=[IsAdminOrOwner])
     def change_password(self, request, pk=None):
@@ -273,7 +261,6 @@ class UserViewSet(viewsets.ModelViewSet):
             {
                 "user_id": user.id,
                 "username": user.username,
-                "email": user.email,
                 "permissions": permissions_data,
                 "grouped_permissions": grouped,
                 "total_count": len(permissions_data),
@@ -312,7 +299,6 @@ class UserViewSet(viewsets.ModelViewSet):
             {
                 "user_id": user.id,
                 "username": user.username,
-                "email": user.email,
                 "permissions": permissions_data,
                 "total_count": len(permissions_data),
             }
@@ -342,6 +328,35 @@ class UserViewSet(viewsets.ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    # assign role to user
+    @action(detail=True, methods=["post"], permission_classes=[IsAdminRole])
+    def assign_role(self, request, pk=None):
+        """
+        Admin endpoint to assign roles to a user.
+        POST /api/users/{id}/assign_role/
+        """
+        user = self.get_object()
+        serializer = AssignRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        role_ids = serializer.validated_data["role_ids"]
+
+        # Validate that all role_ids exist
+        if not Group.objects.filter(id__in=role_ids).count() == len(role_ids):
+            return Response(
+                {"detail": "One or more role IDs do not exist."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Assign the roles to the user
+        user.groups.set(role_ids)
+        user.save()
+
+        return Response(
+            {"detail": "Roles assigned successfully."}, status=status.HTTP_200_OK
+        )
+
 
 class LoginView(APIView):
     permission_classes = [AllowAny]

@@ -59,7 +59,7 @@ class AdminUpdateRestriction(permissions.BasePermission):
         # For UPDATE and PARTIAL_UPDATE actions
         if view.action in ["update", "partial_update"]:
             # Check if trying to modify forbidden fields
-            forbidden_fields = ["first_name", "last_name", "email"]
+            forbidden_fields = ["first_name", "last_name"]
 
             # Get requested data from the request
             request_data = request.data
