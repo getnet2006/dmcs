@@ -59,7 +59,7 @@ class ConsumerCreateUpdateSerializer(serializers.ModelSerializer):
 
 class ConsumerDetailSerializer(serializers.ModelSerializer):
     applications = ApplicationNestedSerializer(many=True, read_only=True)
-    created_by = serializers.ReadOnlyField(source="created_by.username")
+    created_by = serializers.ReadOnlyField(source="created_by.get_full_name")
 
     class Meta:
         model = Consumer
@@ -162,7 +162,7 @@ class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):
 
 class ConsumerCommunicationSerializer(serializers.ModelSerializer):
     application_name = serializers.ReadOnlyField(source="application.name")
-    created_by = serializers.ReadOnlyField(source="user.username")
+    created_by = serializers.ReadOnlyField(source="user.get_full_name")
 
     class Meta:
         model = ConsumerCommunication
@@ -204,7 +204,5 @@ class SubscriptionReadSerializer(serializers.ModelSerializer):
 class SubscriptionCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
-        fields = [
-            "name",
-        ]
+        fields = ["name", "authentication_type", "client_id"]
         read_only_fields = ["id", "created_by", "created_at", "updated_at"]

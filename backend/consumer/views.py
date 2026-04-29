@@ -212,7 +212,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
             return SubscriptionReadSerializer
-        return SubscriptionWriteSerializer
+        return SubscriptionCreateUpdateSerializer
 
     def get_permissions(self):
         if self.action in ["update", "partial_update"]:
