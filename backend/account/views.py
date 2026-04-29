@@ -20,6 +20,7 @@ from .permissions import (
     IsOwnerOnly,
     AdminUpdateRestriction,
     CanChangeFirstLoginPassword,
+    MustChangePasswordBeforeAccess,
 )
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -55,16 +56,6 @@ class RoleViewSet(viewsets.ModelViewSet):
         if self.action in ["create", "update", "partial_update"]:
             return RoleCreateUpdateSerializer
         return RoleSerializer
-
-
-# class UserViewSet(viewsets.ModelViewSet):
-#     queryset = User.objects.all()
-#     permission_classes = [UserAccessPermission]
-
-#     def get_serializer_class(self):
-#         if self.action == "create":
-#             return UserCreateSerializer
-#         return UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -137,7 +128,15 @@ class UserViewSet(viewsets.ModelViewSet):
         context["request"] = self.request
         return context
 
-    @action(detail=True, methods=["post"], permission_classes=[IsAdminOrOwner])
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[
+            IsAuthenticated,
+            IsAdminOrOwner,
+            MustChangePasswordBeforeAccess,
+        ],
+    )
     def change_password(self, request, pk=None):
         """
         Dedicated endpoint for password change: POST /users/{id}/change_password/
@@ -217,7 +216,15 @@ class UserViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["get"], permission_classes=[IsAdminOrOwner])
+    @action(
+        detail=True,
+        methods=["get"],
+        permission_classes=[
+            IsAuthenticated,
+            IsAdminOrOwner,
+            MustChangePasswordBeforeAccess,
+        ],
+    )
     def permissions(self, request, pk=None):
         """
         Get all permissions for a specific user.
@@ -267,7 +274,11 @@ class UserViewSet(viewsets.ModelViewSet):
             }
         )
 
-    @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[IsAuthenticated, MustChangePasswordBeforeAccess],
+    )
     def my_permissions(self, request):
         """
         Get permissions for the currently authenticated user.
@@ -305,7 +316,15 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     # action to rest a user's password by admin
-    @action(detail=True, methods=["post"], permission_classes=[IsAdminRole])
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[
+            IsAuthenticated,
+            IsAdminRole,
+            MustChangePasswordBeforeAccess,
+        ],
+    )
     def reset_password(self, request, pk=None):
         """
         Admin endpoint to reset a user's password.
@@ -330,7 +349,15 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     # assign role to user
-    @action(detail=True, methods=["post"], permission_classes=[IsAdminRole])
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[
+            IsAuthenticated,
+            IsAdminRole,
+            MustChangePasswordBeforeAccess,
+        ],
+    )
     def assign_role(self, request, pk=None):
         """
         Admin endpoint to assign roles to a user.

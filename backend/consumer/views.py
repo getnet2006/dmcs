@@ -30,6 +30,7 @@ from .permissions import (
     IsAllowedToAddDocument,
     IsAllowedToAddSubscription,
 )
+from account.permissions import MustChangePasswordBeforeAccess
 
 
 class ConsumerViewSet(viewsets.ModelViewSet):
@@ -37,6 +38,7 @@ class ConsumerViewSet(viewsets.ModelViewSet):
     permission_classes = [
         IsAuthenticated,
         DjangoModelPermissions,
+        MustChangePasswordBeforeAccess,
     ]
     http_method_names = ["get", "post", "put", "patch"]
 
@@ -47,9 +49,17 @@ class ConsumerViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["update", "partial_update"]:
-            self.permission_classes = [IsOwner | IsAdminRole]
+            self.permission_classes = [
+                IsOwner | IsAdminRole,
+                DjangoModelPermissions,
+                MustChangePasswordBeforeAccess,
+            ]
         else:
-            self.permission_classes = [IsAuthenticated, DjangoModelPermissions]
+            self.permission_classes = [
+                IsAuthenticated,
+                DjangoModelPermissions,
+                MustChangePasswordBeforeAccess,
+            ]
         return super().get_permissions()
 
     def perform_create(self, serializer):
@@ -80,7 +90,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         .prefetch_related("documents", "subscriptions")
     )
     http_method_names = ["get", "post", "put", "patch"]
-    permission_classes = [IsAuthenticated, DjangoModelPermissions]
+    permission_classes = [
+        IsAuthenticated,
+        DjangoModelPermissions,
+        MustChangePasswordBeforeAccess,
+    ]
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "list"]:
@@ -93,7 +107,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=["post"],
-        permission_classes=[IsAllowedToAddDocument],
+        permission_classes=[IsAllowedToAddDocument, MustChangePasswordBeforeAccess],
     )
     def add_document(self, request, pk=None):
         application = self.get_object()
@@ -105,7 +119,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Document ID is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
         try:
             document = Document.objects.get(document_id=document_id)
         except Document.DoesNotExist:
@@ -120,7 +133,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Document is already associated with this application."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
         try:
             application.documents.add(document)
             stage_updated = application.transition_by_document(document)
@@ -129,16 +141,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        
-        return Response({
-            "status": "document added",
-            "stage_updated": stage_updated
-        })
+        return Response({"status": "document added", "stage_updated": stage_updated})
 
     @action(
         detail=True,
         methods=["post"],
-        permission_classes=[IsAllowedToAddSubscription],
+        permission_classes=[IsAllowedToAddSubscription, MustChangePasswordBeforeAccess],
     )
     def add_subscription(self, request, pk=None):
         application = self.get_object()
@@ -159,6 +167,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        # check if any of the subscriptions are already associated with the application
+        existing_subscriptions = application.subscriptions.filter(
+            id__in=subscription_ids
+        )
+        if existing_subscriptions.exists():
+            return Response(
+                {
+                    "error": "One or more subscriptions are already associated with this application."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         application.subscriptions.add(*subscription_ids)
 
         return Response(
@@ -170,7 +190,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 class CommunicationViewSet(viewsets.ModelViewSet):
     queryset = ConsumerCommunication.objects.all()
     http_method_names = ["get", "post"]
-    permission_classes = [DjangoModelPermissions]
+    permission_classes = [DjangoModelPermissions, MustChangePasswordBeforeAccess]
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "list"]:
@@ -203,6 +223,11 @@ class CommunicationViewSet(viewsets.ModelViewSet):
 class SubscriptionViewSet(viewsets.ModelViewSet):
     queryset = Subscription.objects.all()
     http_method_names = ["get", "post", "put", "patch"]
+    permission_classes = [
+        IsAuthenticated,
+        DjangoModelPermissions,
+        MustChangePasswordBeforeAccess,
+    ]
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:

@@ -46,7 +46,6 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "account.middleware.MustChangePasswordMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -71,7 +70,6 @@ TEMPLATES = [
 WSGI_APPLICATION = "dmcs.wsgi.application"
 
 AUTHENTICATION_BACKENDS = [
-    "account.authentication.CustomAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 

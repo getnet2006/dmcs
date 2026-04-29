@@ -114,3 +114,25 @@ class CanChangeFirstLoginPassword(permissions.BasePermission):
 
         logger.info("Permission granted!")
         return True
+
+
+class MustChangePasswordBeforeAccess(permissions.BasePermission):
+    skip_paths = [
+        "/api/users/change_first_login_password/",
+        "/api/auth/login/",
+        "/api/auth/refresh/",
+    ]
+
+    def has_permission(self, request, view):
+        if request.path_info in self.skip_paths:
+            return True
+
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        if (
+            hasattr(request.user, "must_change_password")
+            and request.user.must_change_password
+        ):
+            return False
+        return True
