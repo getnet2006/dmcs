@@ -211,7 +211,7 @@ class LoginSerializer(serializers.Serializer):
             refresh["must_change_password"] = True
             print(refresh["must_change_password"])
             return {
-                "user_id": user.username,
+                "username": user.username,
                 "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "must_change_password": user.must_change_password,

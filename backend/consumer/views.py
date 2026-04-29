@@ -198,7 +198,7 @@ class CommunicationViewSet(viewsets.ModelViewSet):
         return ConsumerCommunicationCreateUpdateSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(created_by=self.request.user)
 
     def list(self, request, *args, **kwargs):
         return Response(
@@ -216,18 +216,12 @@ class CommunicationViewSet(viewsets.ModelViewSet):
     )
     def by_application(self, request, application_id=None):
         communications = self.queryset.filter(application_id=application_id)
-        serializer = self.get_serializer(communications, many=True)
+        serializer = ConsumerCommunicationSerializer(communications, many=True)
         return Response(serializer.data)
 
 
 class SubscriptionViewSet(viewsets.ModelViewSet):
-    queryset = Subscription.objects.all()
-    http_method_names = ["get", "post", "put", "patch"]
-    permission_classes = [
-        IsAuthenticated,
-        DjangoModelPermissions,
-        MustChangePasswordBeforeAccess,
-    ]
+    queryset = Subscription.objects.all().order_by("-id")
 
     def get_serializer_class(self):
         if self.action in ["list", "retrieve"]:
@@ -235,10 +229,18 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
         return SubscriptionCreateUpdateSerializer
 
     def get_permissions(self):
-        if self.action in ["update", "partial_update"]:
-            self.permission_classes = [IsAuthenticated, IsOwner | IsAdminRole]
+        if self.action in ["update", "partial_update", "destroy"]:
+            self.permission_classes = [
+                IsAuthenticated,
+                IsOwner | IsAdminRole,
+                MustChangePasswordBeforeAccess,
+            ]
         else:
-            self.permission_classes = [IsAuthenticated, DjangoModelPermissions]
+            self.permission_classes = [
+                IsAuthenticated,
+                DjangoModelPermissions,
+                MustChangePasswordBeforeAccess,
+            ]
         return super().get_permissions()
 
     def perform_create(self, serializer):

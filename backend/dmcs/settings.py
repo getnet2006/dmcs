@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from decouple import config
 
 # 1. BASE_DIR must be defined first!
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -10,10 +11,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-4*$4ybcc-nr$3**qsx@f2mrrkoj&h4hu+)kyf$$^fjci3tf&ko"
+SECRET_KEY = config("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = config("DEBUG", default=True)
 ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = "account.User"
@@ -95,6 +96,15 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     }
+    # For production, use PostgreSQL
+    # "default": {
+    #     "ENGINE": "django.db.backends.postgresql",
+    #     "NAME": config("NAME"),
+    #     "USER": config("USER"),
+    #     "PASSWORD": config("PASSWORD"),
+    #     "HOST": config("HOST", default="localhost"),
+    #     "PORT": config("PORT", default="5432"),
+    # }
 }
 
 
