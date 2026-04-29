@@ -17,7 +17,7 @@ class ConsumerAdmin(admin.ModelAdmin):
 
 @admin.register(ConsumerOnboardingStage)
 class ConsumerOnboardingStageAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "order")
+    list_display = ("id", "name", "order", "document_category")
     search_fields = ("name",)
     ordering = ("order",)
 

@@ -34,8 +34,6 @@ class ConsumerCreateUpdateSerializer(serializers.ModelSerializer):
         ordered_fields = [
             "id",
             "name",
-            "owner_work_unit",
-            "purpose_of_usage",
             "consumer_type",
             "email",
             "phone",
@@ -107,7 +105,8 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
             "created_by",
             "current_stage_name",
             "source_ip",
-            "description",
+            "owner_work_unit",
+            "purpose_of_usage",
             "last_stage_updated_at",
             "created_at",
             "updated_at",
@@ -128,9 +127,10 @@ class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             "name",
             "consumer",
             "user",
+            "owner_work_unit",
+            "purpose_of_usage",
             "current_stage",
             "source_ip",
-            "description",
             "last_stage_updated_at",
             "created_at",
             "updated_at",
@@ -144,15 +144,6 @@ class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             "subscriptions",
         ]
 
-    def update(self, instance, validated_data):
-        new_stage = validated_data.get("current_stage")
-        if new_stage and new_stage != instance.current_stage:
-            from django.utils import timezone
-
-            instance.last_stage_updated_at = timezone.now()
-
-        return super().update(instance, validated_data)
-
 
 class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):
     class Meta:
@@ -162,7 +153,7 @@ class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):
 
 class ConsumerCommunicationSerializer(serializers.ModelSerializer):
     application_name = serializers.ReadOnlyField(source="application.name")
-    created_by = serializers.ReadOnlyField(source="user.get_full_name")
+    created_by = serializers.ReadOnlyField(source="created_by.username")
 
     class Meta:
         model = ConsumerCommunication

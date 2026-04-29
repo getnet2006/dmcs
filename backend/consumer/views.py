@@ -88,9 +88,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return ApplicationCreateUpdateSerializer
 
     def perform_create(self, serializer):
-        # add current stage as the first stage of the onboarding process
-        current_stage = ConsumerOnboardingStage.objects.order_by("order").first()
-        serializer.save(user=self.request.user, current_stage=current_stage)
+        serializer.save(user=self.request.user)
 
     @action(
         detail=True,
@@ -107,8 +105,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Document ID is required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        # check if the document exists
-        if not Document.objects.filter(document_id=document_id).exists():
+        
+        try:
+            document = Document.objects.get(document_id=document_id)
+        except Document.DoesNotExist:
             return Response(
                 {"error": "Document with this ID does not exist."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -120,25 +120,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {"error": "Document is already associated with this application."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        
         try:
-            document = Document.objects.get(document_id=document_id)
-            application.documents.add(document_id)
-            new_stage = ConsumerOnboardingStage.objects.filter(
-                document_category=document.category.name
-            ).first()
-            if new_stage:
-                application.current_stage = new_stage
-                application.last_stage_updated_at = timezone.now()
-                application.save()
-                stage_updated = True
-            else:
-                stage_updated = False
+            application.documents.add(document)
+            stage_updated = application.transition_by_document(document)
         except Exception as e:
             return Response(
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        return Response({"status": "document added"})
+        
+        return Response({
+            "status": "document added",
+            "stage_updated": stage_updated
+        })
 
     @action(
         detail=True,

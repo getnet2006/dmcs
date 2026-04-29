@@ -1,7 +1,7 @@
 from django.db import models
+from django.utils import timezone
 from account.models import User
 from documents.models import Document
-from account.models import User
 
 
 class Subscription(models.Model):
@@ -31,8 +31,6 @@ class Consumer(models.Model):
     )
 
     name = models.CharField(max_length=255)
-    owner_work_unit = models.CharField(max_length=255)
-    purpose_of_usage = models.TextField()
     consumer_type = models.CharField(max_length=20, choices=CONSUMER_TYPES)
     email = models.EmailField()
     phone = models.CharField(max_length=50)
@@ -69,14 +67,51 @@ class Application(models.Model):
     subscriptions = models.ManyToManyField(
         Subscription, blank=True, related_name="applications"
     )
+    owner_work_unit = models.CharField(max_length=255)
+    purpose_of_usage = models.TextField()
     source_ip = models.GenericIPAddressField()
-    description = models.TextField(blank=True)
     last_stage_updated_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+    def set_stage(self, stage):
+        """Sets the current stage and updates the timestamp."""
+        if self.current_stage != stage:
+            self.current_stage = stage
+            self.last_stage_updated_at = timezone.now()
+            self.save(update_fields=["current_stage", "last_stage_updated_at"])
+
+    def transition_by_document(self, document):
+        """Attempts to transition to a new stage based on a document's category."""
+        new_stage = ConsumerOnboardingStage.objects.filter(
+            document_category=document.category.name
+        ).first()
+        if new_stage:
+            self.set_stage(new_stage)
+            return True
+        return False
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            # Set initial stage for new applications if not already set
+            if not self.current_stage:
+                self.current_stage = ConsumerOnboardingStage.objects.order_by(
+                    "order"
+                ).first()
+        else:
+            # Detect stage change for existing applications
+            # We use a simple query to get the old value
+            try:
+                old_instance = Application.objects.get(pk=self.pk)
+                if old_instance.current_stage != self.current_stage:
+                    self.last_stage_updated_at = timezone.now()
+            except Application.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-created_at"]
