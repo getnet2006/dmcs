@@ -103,7 +103,8 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "consumer_name",
-            "created_by" "full_name",
+            "created_by",
+            "full_name",
             "current_stage_name",
             "source_ip",
             "owner_work_unit",
@@ -161,7 +162,7 @@ class ConsumerCommunicationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ConsumerCommunication
-        fields = __all__
+        fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
@@ -189,7 +190,7 @@ class SubscriptionReadSerializer(serializers.ModelSerializer):
     full_name = serializers.PrimaryKeyRelatedField(
         source="created_by.get_full_name", read_only=True
     )
-    created_by_id = serializers.ReadOnlyField(source="created_by.id")
+    created_by = serializers.ReadOnlyField(source="created_by.id")
 
     class Meta:
         model = Subscription
