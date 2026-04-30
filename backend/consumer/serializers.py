@@ -91,10 +91,11 @@ class SubscriptionNestedSerializer(serializers.ModelSerializer):
 
 class ApplicationDetailSerializer(serializers.ModelSerializer):
     consumer_name = serializers.ReadOnlyField(source="consumer.name")
-    created_by = serializers.ReadOnlyField(source="user.username")
+    created_by = serializers.ReadOnlyField(source="user.id")
     current_stage_name = serializers.ReadOnlyField(source="current_stage.name")
     documents = DocumentNestedSerializer(many=True, read_only=True)
     subscriptions = SubscriptionNestedSerializer(many=True, read_only=True)
+    full_name = serializers.ReadOnlyField(source="user.get_full_name")
 
     class Meta:
         model = Application
@@ -102,7 +103,7 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "consumer_name",
-            "created_by",
+            "created_by" "full_name",
             "current_stage_name",
             "source_ip",
             "owner_work_unit",
@@ -145,26 +146,22 @@ class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
         ]
 
 
+# Onboarding stage related serializers
 class ConsumerOnboardingStageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConsumerOnboardingStage
         fields = "__all__"
 
 
+# communication related serializers
 class ConsumerCommunicationSerializer(serializers.ModelSerializer):
     application_name = serializers.ReadOnlyField(source="application.name")
-    created_by = serializers.ReadOnlyField(source="created_by.get_full_name")
+    full_name = serializers.ReadOnlyField(source="created_by.get_full_name")
+    created_by_id = serializers.ReadOnlyField(source="created_by.id")
 
     class Meta:
         model = ConsumerCommunication
-        fields = [
-            "id",
-            "application_name",
-            "remark",
-            "created_by",
-            "created_at",
-            "updated_at",
-        ]
+        fields = __all__
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
@@ -187,18 +184,18 @@ class ConsumerCommunicationCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "created_at", "updated_at"]
 
 
-# serializer for subscription retrival in application detail view
+# subscription related serializers
 class SubscriptionReadSerializer(serializers.ModelSerializer):
-    created_by = serializers.PrimaryKeyRelatedField(
+    full_name = serializers.PrimaryKeyRelatedField(
         source="created_by.get_full_name", read_only=True
     )
+    created_by_id = serializers.ReadOnlyField(source="created_by.id")
 
     class Meta:
         model = Subscription
         fields = "__all__"
 
 
-# serializer for subscription creation and update
 class SubscriptionCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
