@@ -64,8 +64,6 @@ class ConsumerDetailSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
-            "owner_work_unit",
-            "purpose_of_usage",
             "consumer_type",
             "email",
             "phone",
