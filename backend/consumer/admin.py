@@ -28,13 +28,13 @@ class ApplicationAdmin(admin.ModelAdmin):
         "id",
         "name",
         "consumer",
-        "user",
+        "created_by",
         "current_stage",
         "source_ip",
         "created_at",
         "updated_at",
     )
-    search_fields = ("name", "consumer__name", "user__username")
+    search_fields = ("name", "consumer__name", "created_by__username")
     ordering = ("-created_at",)
 
 

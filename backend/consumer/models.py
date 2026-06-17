@@ -57,7 +57,7 @@ class Application(models.Model):
     consumer = models.ForeignKey(
         Consumer, on_delete=models.CASCADE, related_name="applications"
     )
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     current_stage = models.ForeignKey(
         ConsumerOnboardingStage, on_delete=models.SET_NULL, null=True
     )

@@ -86,7 +86,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     queryset = (
         Application.objects.all()
-        .select_related("consumer", "user", "current_stage")
+        .select_related("consumer", "created_by", "current_stage")
         .prefetch_related("documents", "subscriptions")
     )
     http_method_names = ["get", "post", "put", "patch"]
@@ -102,7 +102,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return ApplicationCreateUpdateSerializer
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        serializer.save(created_by=self.request.user)
 
     @action(
         detail=True,

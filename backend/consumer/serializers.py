@@ -89,11 +89,11 @@ class SubscriptionNestedSerializer(serializers.ModelSerializer):
 
 class ApplicationDetailSerializer(serializers.ModelSerializer):
     consumer_name = serializers.ReadOnlyField(source="consumer.name")
-    created_by = serializers.ReadOnlyField(source="user.id")
+    created_by = serializers.ReadOnlyField(source="created_by.username")
     current_stage_name = serializers.ReadOnlyField(source="current_stage.name")
     documents = DocumentNestedSerializer(many=True, read_only=True)
     subscriptions = SubscriptionNestedSerializer(many=True, read_only=True)
-    full_name = serializers.ReadOnlyField(source="user.get_full_name")
+    full_name = serializers.ReadOnlyField(source="created_by.get_full_name")
 
     class Meta:
         model = Application
@@ -118,7 +118,7 @@ class ApplicationDetailSerializer(serializers.ModelSerializer):
 
 class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
     consumer = serializers.PrimaryKeyRelatedField(queryset=Consumer.objects.all())
-    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    # created_by = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = Application
@@ -126,7 +126,6 @@ class ApplicationCreateUpdateSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "consumer",
-            "user",
             "owner_work_unit",
             "purpose_of_usage",
             "current_stage",
